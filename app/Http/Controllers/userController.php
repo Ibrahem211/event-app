@@ -996,7 +996,6 @@ class userController extends Controller
     {
         $keywords = [];
 
-        // تحديد نوع الحفلة
         if (str_contains(strtolower($description), 'birthday')) {
             $keywords['type'] = 'birthday';
         } elseif (str_contains(strtolower($description), 'wedding')) {
@@ -1009,17 +1008,13 @@ class userController extends Controller
             $keywords['type'] = 'kids party';
         }
 
-        // استخراج ميزانية تقريبية
         if (preg_match('/\coins\d+/', $description, $matches)) {
             $keywords['budget'] = intval(str_replace('coins', '', $matches[0]));
         }
-
-        // استخراج عدد الحضور
         if (preg_match('/\b(\d+)\s*(people|guests|attendees|children|adults)\b/i', $description, $matches)) {
             $keywords['guests'] = intval($matches[1]);
         }
 
-        // استخراج تفضيلات الطعام
         if (str_contains(strtolower($description), 'big meal')) {
             $keywords['food'] = 'main meal';
         } elseif (str_contains(strtolower($description), 'food')) {
@@ -1032,7 +1027,6 @@ class userController extends Controller
             $keywords['food'] = 'drink';
         }
 
-        // استخراج تفضيلات الموسيقى
         if (str_contains(strtolower($description), 'romantic music')) {
             $keywords['music'] = 'romantic';
         } elseif (str_contains(strtolower($description), 'upbeat music')) {
@@ -1046,7 +1040,6 @@ class userController extends Controller
     {
         $response = "Based on your party details, here are some suggestions:\n";
 
-        // اقتراح الأماكن
         if (isset($details['type']) && in_array($details['type'], ['birthday', 'graduation', 'family party', 'kids party'])) {
             $placesuitables = Place::query()
                 ->where('name', 'restaurant')
@@ -1054,7 +1047,7 @@ class userController extends Controller
                 ->get();
         } elseif (isset($details['type']) && in_array($details['type'], ['wedding'])) {
             $placesuitables = Place::query()
-                ->where('name', 'restaurant')  // جلب الأماكن التي نوعها restaurant
+                ->where('name', 'restaurant')
                 ->orWhere('name', 'hotel')
                 ->orWhere('name', 'hall')
                 ->get();
@@ -1071,13 +1064,10 @@ class userController extends Controller
         }
 
 
-        // اقتراح الأطعمة
         if (isset($details['food'])) {
             $foodsuitables = Food::query()
                 ->where('categories', 'LIKE', "%{$details['food']}%")
-                // ->orWhere('name', 'LIKE', "%{$details['food']}%")
                 ->get();
-            //return $foodsuitables;
             if ($foodsuitables->isNotEmpty()) {
                 foreach ($foodsuitables as $foodsuitable) {
                     $foods =  food::query()
@@ -1092,7 +1082,6 @@ class userController extends Controller
             }
         }
 
-        // اقتراح الموسيقى
         if (isset($details['music'])) {
             $music = Songer::query()
                 ->where('name', 'LIKE', "%{$details['music']}%")
@@ -1112,7 +1101,6 @@ class userController extends Controller
 
     private function customSearch($entities, $question = null)
     {
-        // إذا كان السؤال يتعلق بوصف الحفلة
         if (
             str_contains(strtolower($question), 'my party') ||
             str_contains(strtolower($question), 'make') ||
@@ -1125,7 +1113,6 @@ class userController extends Controller
 
         $response = null;
 
-        // Here we analyze the entities and search the appropriate tables
         if (in_array('place', $entities) ||  in_array('places', $entities)) {
             foreach ($entities as $entity) {
                 if (str_contains(strtolower($entity), 'near') || str_contains(strtolower($entity), 'in')) {
@@ -1162,12 +1149,10 @@ class userController extends Controller
         }
 
         return $response;
-        //?? "Sorry, I couldn't find an answer to this question.";
     }
 
     private function searchPlaces($entities)
     {
-        // Here we search for suitable places based on the entities
         $places = Place::query()->with('address');
 
         foreach ($entities as $entity) {
@@ -1181,7 +1166,6 @@ class userController extends Controller
             }
         }
 
-        // $result = $places->get();
 
         if ($result->isEmpty()) {
             return "I couldn't find suitable places.";
@@ -1199,19 +1183,16 @@ class userController extends Controller
 
     private function searchFoods($entities)
     {
-        // Here we search for suitable foods based on the entities
         $foods = Food::query();
 
         foreach ($entities as $entity) {
             if (is_numeric($entity)) {
                 $result = $foods->orWhere('price', '<=', $entity)->get();
-                //return $result;
             } else {
                 $result = $foods->orWhere('categories', 'LIKE', "%$entity%")->get();
             }
         }
 
-        //$result = $foods->get();
 
         if ($result->isEmpty()) {
             return "I couldn't find suitable foods.";
@@ -1229,19 +1210,15 @@ class userController extends Controller
 
     private function searchDecorations($entities)
     {
-        // Here we search for suitable decorations based on the entities
         $decorations = Decoration::query();
 
         foreach ($entities as $entity) {
             if (is_numeric($entity)) {
                 $result = $decorations->orWhere('price', '<=', $entity)->get();
-                //return $result;
             } else {
                 $result =  $decorations->orWhere('type', 'LIKE', "%$entity%")->get();
             }
         }
-
-        // $result = $decorations->get();
 
         if ($result->isEmpty()) {
             return "I couldn't find suitable decorations.";
@@ -1257,19 +1234,17 @@ class userController extends Controller
 
     private function searchMusic($entities)
     {
-        // Here we search for suitable music based on the entities
         $music = Songer::query();
 
         foreach ($entities as $entity) {
             if (is_numeric($entity)) {
                 $result = $music->orWhere('price', '<=', $entity)->get();
-                //return $result;
+
             } else {
                 $result =  $music->orWhere('name', 'LIKE', "%$entity%")->get();
             }
         }
 
-        // $result = $decorations->get();
 
         if ($result->isEmpty()) {
             return "I couldn't find suitable decorations.";
@@ -1285,19 +1260,17 @@ class userController extends Controller
 
     private function searchCar($entities)
     {
-        // Here we search for suitable music based on the entities
         $car = Car::query();
 
         foreach ($entities as $entity) {
             if (is_numeric($entity)) {
                 $result = $car->orWhere('price', '<=', $entity)->get();
-                //return $result;
+
             } else {
                 $result =  $car->orWhere('name', 'LIKE', "%$entity%")->get();
             }
         }
 
-        // $result = $decorations->get();
 
         if ($result->isEmpty()) {
             return "I couldn't find suitable decorations.";
@@ -1320,14 +1293,14 @@ class userController extends Controller
             $locresult =  $location->orWhere('name', 'LIKE', "%$entity%")->first();
         }
 
-        // $result = $decorations->get();
+
 
         if (!$locresult) {
             return  "I couldn't find the location specified.";
         }
 
 
-        // البحث عن جميع الأماكن التي ترتبط بهذا العنوان أو العناوين الفرعية
+
         $places = Place::where('adress_id', $locresult->id)
             ->orWhereHas('address', function ($query) use ($locresult) {
                 $query->where('parent_id', $locresult->id);
@@ -1350,13 +1323,6 @@ class userController extends Controller
     {
         $question = $request->input('question');
         $answer = $this->findAnswer($question);
-        //  return $findques ? response()->json([
-        //         'answer' => $findques,
-        //         'data' =>  $this->customSearch($entities,$question)
-        //     ], 200) : response()->json([
-        //         'data' =>  $this->customSearch($entities, $question)
-        //     ], 200);
-        //?? $this->customSearch($entities, $question);
 
         return response()->json(['answer' => $answer]);
     }
