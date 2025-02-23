@@ -961,8 +961,6 @@ class userController extends Controller
 
     public function analyzeQuestion($question)
     {
-        // Here you can use an external library for text analysis if desired
-        // A simple example of manually analyzing the text
         $keywords = explode(' ', $question);
         return $keywords;
     }
@@ -973,8 +971,6 @@ class userController extends Controller
         $searchQuery = implode(' ', $entities);
 
         $faq = quistion::whereRaw("MATCH(question, answer, topic, tags) AGAINST(? IN NATURAL LANGUAGE MODE)", [$searchQuery])->first();
-        //$answer=$faq->answer;
-        // if($faq->isEmpty()){
         $costumsearch = $this->customSearch($entities, $question);
         if ($costumsearch) {
             return $faq
